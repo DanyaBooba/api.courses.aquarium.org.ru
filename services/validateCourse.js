@@ -72,7 +72,8 @@ function pages(value) {
         return {
             ...page,
             slug,
-            title: text(page.title, `${label}: название`, { max: 200, required: true }),
+            // Название не обязательно: только что созданный урок сохраняется ещё пустым
+            title: text(page.title, `${label}: название`, { max: 200 }),
             short: text(page.short, `${label}: короткое название`, { max: 100 }),
             content: blocks(page.content, label),
         };

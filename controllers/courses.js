@@ -15,8 +15,14 @@ class CoursesController {
     static async show(req, res) {
         const course = await CourseModel.findById(req.params.id);
 
-        if (!course || (course.disabled && !canEdit(req.user, course))) {
+        if (!course) {
             return res.status(404).json({ message: 'Курс не найден.' });
+        }
+
+        // Закрытый курс целиком видят только его автор и администратор.
+        // Остальным — плашка «Ведётся работа»: курс есть, но уроки пока не отдаём
+        if (course.disabled && !canEdit(req.user, course)) {
+            return res.status(403).json({ message: 'Над курсом ведётся работа.', status: 'wip' });
         }
 
         return res.json({ course });

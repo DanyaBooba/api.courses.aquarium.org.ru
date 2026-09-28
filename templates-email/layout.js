@@ -87,7 +87,7 @@ function layout({ preview, body }) {
         }
         @media (max-width: 520px) {
             .dd-card { padding: 28px 20px !important; }
-            .dd-code { font-size: 24px !important; width: 40px !important; }
+            .dd-code { font-size: 24px !important; padding: 12px 12px 12px 20px !important; }
         }
     </style>
 </head>

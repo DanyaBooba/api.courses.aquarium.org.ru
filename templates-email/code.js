@@ -1,16 +1,14 @@
 const { COLORS, MONO, escape, title, paragraph, note, layout } = require('./layout');
 
-function codeCells(code) {
-    const cells = [...code]
-        .map((char) => `
-            <td class="dd-code" align="center" style="width: 48px; height: 60px; background-color: ${COLORS.codeBg}; border: 1px solid ${COLORS.border}; font-family: ${MONO}; font-size: 30px; font-weight: 600; color: ${COLORS.text};">
-                ${escape(char)}
-            </td>`)
-        .join('<td style="width: 6px;"></td>');
-
+// Код одной строкой в одной ячейке: копируется целиком, без пробелов между символами.
+// Разрядку даёт letter-spacing — он не добавляет символов в выделение.
+// Справа отступ меньше, чем слева: letter-spacing оставляет хвост после последнего символа.
+function codeBlock(code) {
     return `
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 28px 0 8px;">
-            <tr>${cells}</tr>
+            <tr>
+                <td class="dd-code" style="padding: 14px 16px 14px 26px; background-color: ${COLORS.codeBg}; border: 1px solid ${COLORS.border}; font-family: ${MONO}; font-size: 30px; font-weight: 600; letter-spacing: 0.35em; line-height: 1.2; color: ${COLORS.text}; white-space: nowrap;">${escape(code)}</td>
+            </tr>
         </table>`;
 }
 
@@ -19,7 +17,7 @@ module.exports = ({ code, lifetimeMin }) => layout({
     body: `
         ${title('Код для входа')}
         ${paragraph('Введите этот код на странице авторизации. Регистр букв не важен.')}
-        ${codeCells(code)}
+        ${codeBlock(code)}
         ${paragraph(`<span class="dd-tertiary" style="color: ${COLORS.tertiary}; font-size: 14px;">Код действует ${lifetimeMin} мин. и сработает один раз.</span>`)}
         ${note('<b>Никому не передавайте этот код.</b> Если вы не запрашивали вход, просто проигнорируйте письмо.')}
     `,

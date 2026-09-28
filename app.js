@@ -6,6 +6,8 @@ const authRoutes = require('./routes/auth');
 const profileRoutes = require('./routes/profile');
 const coursesRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
+const uploadsRoutes = require('./routes/uploads');
+const UploadsController = require('./controllers/uploads');
 const errorHandler = require('./middlewares/error');
 const notFound = require('./middlewares/notFound');
 
@@ -18,8 +20,14 @@ function createApp() {
     const app = express();
 
     app.set('trust proxy', 1);
-    app.use(helmet());
+    // Картинки из /uploads показываются на сайте — с другого домена
+    app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
     app.use(cors({ origin: allowedOrigins }));
+
+    // Имена загруженных файлов уникальны, поэтому кэшировать их можно навсегда.
+    // Стоит до no-store ниже, чтобы тот не перебил кэш
+    app.use('/uploads', express.static(UploadsController.UPLOADS_DIR, { maxAge: '365d', immutable: true }));
+
     app.use(express.json({ limit: '2mb' }));
 
     app.use((req, res, next) => {
@@ -32,6 +40,7 @@ function createApp() {
     app.use(authRoutes);
     app.use(profileRoutes);
     app.use(coursesRoutes);
+    app.use(uploadsRoutes);
     app.use('/admin', adminRoutes);
 
     app.use(notFound);

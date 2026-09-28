@@ -2,7 +2,7 @@ function errorHandler(err, req, res, next) {
     if (res.headersSent) return next(err);
 
     if (err.type === 'entity.too.large') {
-        return res.status(413).json({ message: 'Слишком большой запрос.' });
+        return res.status(413).json({ message: req.path === '/uploads' ? 'Фото больше 10 МБ — уменьшите его.' : 'Слишком большой запрос.' });
     }
 
     if (err.status >= 400 && err.status < 500) {
