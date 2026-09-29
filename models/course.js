@@ -40,6 +40,8 @@ function toCourse(row, { full }) {
         author: parse(row.author, null),
         certificate: row.certificate,
         ownerId: row.user_id,
+        // Когда автор отправил курс на проверку; null — проверки не ждёт
+        reviewRequestedAt: row.review_requested_at ?? null,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         ...(full
@@ -72,13 +74,20 @@ class CourseModel {
         return CourseModel.findById(course.id);
     }
 
-    static async update(course) {
+    // `updatedAt` — дата изменения, которую автор выставил сам; без неё — сейчас
+    static async update(course, { updatedAt = new Date() } = {}) {
         await pool.query(
             `UPDATE courses SET ${FIELDS.map((field) => `${field} = ?`).join(', ')}, updated_at = ?
              WHERE id = ?`,
-            [...toRow(course), new Date(), course.id]
+            [...toRow(course), updatedAt, course.id]
         );
         return CourseModel.findById(course.id);
+    }
+
+    /** Отправить на проверку (`date`) или снять с неё (`null`). */
+    static async setReview(id, date) {
+        await pool.query('UPDATE courses SET review_requested_at = ? WHERE id = ?', [date, id]);
+        return CourseModel.findById(id);
     }
 
     static async delete(id) {

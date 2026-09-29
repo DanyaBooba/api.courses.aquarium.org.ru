@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { ACCESS } = require('../config/access');
 
 class UserModel {
     static async findById(id) {
@@ -44,6 +45,11 @@ class UserModel {
             [access]
         );
         return rows;
+    }
+
+    static async adminEmails() {
+        const [rows] = await pool.query('SELECT email FROM users WHERE access >= ?', [ACCESS.ADMIN]);
+        return rows.map((row) => row.email);
     }
 
     static toPublic(user) {

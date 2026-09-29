@@ -80,6 +80,22 @@ function pages(value) {
     });
 }
 
+/**
+ * Дата изменения, выставленная вручную: `{ updatedAt }` или `{ error }`.
+ * Не передана — `updatedAt` пустой, и сервер ставит текущее время.
+ */
+function validateUpdatedAt(value) {
+    if (value === undefined || value === null || value === '') return { updatedAt: null };
+    const date = new Date(value);
+    if (typeof value !== 'string' || Number.isNaN(date.getTime())) {
+        return { error: 'Дата изменения — строка в формате ISO, например «2026-09-29».' };
+    }
+    if (date.getTime() > Date.now() + 24 * 60 * 60 * 1000) {
+        return { error: 'Дата изменения не может быть в будущем.' };
+    }
+    return { updatedAt: date };
+}
+
 function validateCourse(input, { id } = {}) {
     try {
         if (!input || typeof input !== 'object') throw new CourseError('Пустой запрос.');
@@ -127,3 +143,4 @@ function validateCourse(input, { id } = {}) {
 }
 
 module.exports = validateCourse;
+module.exports.validateUpdatedAt = validateUpdatedAt;

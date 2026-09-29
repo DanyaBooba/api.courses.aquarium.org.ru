@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS courses (
     certificate VARCHAR(500) NULL,
     about JSON NOT NULL,
     pages JSON NOT NULL,
+    -- Автор отправил курс на проверку; NULL — проверки не ждёт
+    review_requested_at DATETIME NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     PRIMARY KEY (id),

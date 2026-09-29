@@ -26,6 +26,6 @@ module.exports = ({ email, createdAt }) => layout({
                 <td class="dd-text" style="padding: 10px 0; color: ${COLORS.text}; border-top: 1px solid ${COLORS.border}; border-bottom: 1px solid ${COLORS.border};">${formatDate(createdAt)}</td>
             </tr>
         </table>
-        ${button('Открыть сайт', process.env.APP_URL || 'https://courses.dybka.ru')}
+        ${button('Открыть пользователей', `${process.env.APP_URL || 'https://courses.dybka.ru'}/admin/users`)}
     `,
 });

@@ -1,4 +1,5 @@
 const UserModel = require('../models/user');
+const CourseModel = require('../models/course');
 const EmailService = require('../services/email');
 const { ACCESS, ACCESS_VALUES } = require('../config/access');
 
@@ -9,8 +10,18 @@ class AdminController {
             return res.status(400).json({ message: `Уровень доступа — один из: ${ACCESS_VALUES.join(', ')}.` });
         }
 
-        const users = await UserModel.list({ access });
-        return res.json({ users: users.map(UserModel.toPublic) });
+        const [users, courses] = await Promise.all([UserModel.list({ access }), CourseModel.list()]);
+
+        // У каждого — его курсы: что написал, что открыто, что ждёт проверки
+        const byOwner = new Map();
+        courses.forEach(({ id, title, disabled, reviewRequestedAt, updatedAt, ownerId }) => {
+            if (!byOwner.has(ownerId)) byOwner.set(ownerId, []);
+            byOwner.get(ownerId).push({ id, title, disabled, reviewRequestedAt, updatedAt });
+        });
+
+        return res.json({
+            users: users.map((user) => ({ ...UserModel.toPublic(user), courses: byOwner.get(user.id) ?? [] })),
+        });
     }
 
     static async setAccess(req, res) {
