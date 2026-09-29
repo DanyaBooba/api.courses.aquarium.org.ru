@@ -8,6 +8,7 @@ const coursesRoutes = require('./routes/courses');
 const adminRoutes = require('./routes/admin');
 const uploadsRoutes = require('./routes/uploads');
 const UploadsController = require('./controllers/uploads');
+const SitemapController = require('./controllers/sitemap');
 const errorHandler = require('./middlewares/error');
 const notFound = require('./middlewares/notFound');
 
@@ -36,6 +37,7 @@ function createApp() {
     });
 
     app.get('/health', (req, res) => res.json({ status: 'ok' }));
+    app.get('/sitemap.xml', SitemapController.show);
 
     app.use(authRoutes);
     app.use(profileRoutes);
