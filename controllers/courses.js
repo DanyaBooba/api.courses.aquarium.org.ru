@@ -22,6 +22,8 @@ function hiddenFrom(user, course) {
     return course.disabled && Boolean(course.reviewRequestedAt) && !canEdit(user, course);
 }
 
+const VISITOR_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const PUBLISH_FORBIDDEN = 'Опубликовать курс может только администратор — отправьте его на проверку.';
 
 class CoursesController {
@@ -44,6 +46,24 @@ class CoursesController {
         }
 
         return res.json({ course });
+    }
+
+    /**
+     * Читатель открыл курс. `visitorId` — анонимный UUID из браузера:
+     * по нему считаются разные читатели. Автор курса и администратор
+     * статистику не накручивают, закрытые курсы не считаются.
+     */
+    static async view(req, res) {
+        const visitorId = req.body?.visitorId;
+        if (typeof visitorId !== 'string' || !VISITOR_ID.test(visitorId)) {
+            return res.status(400).json({ message: 'Некорректный идентификатор читателя.' });
+        }
+
+        const course = await CourseModel.findById(req.params.id);
+        if (!course || course.disabled) return res.status(404).json({ message: 'Курс не найден.' });
+
+        if (!canEdit(req.user, course)) await CourseModel.addView(course.id, visitorId.toLowerCase());
+        return res.status(204).end();
     }
 
     static async create(req, res) {

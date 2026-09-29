@@ -23,6 +23,7 @@ npm run dev             # node --watch server.js
 
 ```bash
 mysql -u root courses < database/migrations/001-course-review.sql   # модерация курсов
+mysql -u root courses < database/migrations/002-course-stats.sql    # просмотры и читатели
 ```
 
 В `schema.sql` они уже учтены: новой базе миграции не нужны.
@@ -169,6 +170,19 @@ database/            — схема и перенос курсов
 - `403 { "status": "wip" }` — курс закрыт (`disabled`), а запрашивает не автор и не администратор
 - `404` — курса нет, или он на проверке, а запрашивает не автор и не администратор
 
+#### `POST /courses/:id/view` 🔓 (токен необязателен)
+
+Сайт сообщает, что читатель открыл курс. `visitorId` — анонимный UUID, который браузер хранит у себя: по нему считаются разные читатели.
+
+```json
+{ "visitorId": "0f8fad5b-d9cb-469f-a165-70867728950e" }
+```
+
+Каждый запрос прибавляет к `views` единицу, а к `readers` — только если этот `visitorId` пришёл на курс впервые. Автор курса и администратор (с токеном) статистику не накручивают. Не больше 300 запросов за 15 минут с одного IP.
+
+- `204` — засчитано
+- `400` — некорректный `visitorId`; `404` — курса нет или он закрыт; `429`
+
 #### `POST /courses` ✏️
 
 Создаёт курс. Тело — курс (см. [Курс](#курс)), `id` обязателен. Если `author` не передан, подставляются имя и почта пользователя.
@@ -298,7 +312,7 @@ Content-Type: image/png
 
 Блок — объект с полем `block`: `p`, `h2`, `h3`, `img`, `quote`, `note`, `code`, `ul`, `ol`, `table`, `checklist`, `courses`, `quiz`. Сервер проверяет только тип блока; схема каждого блока описана на сайте, в `src/data/courses.js`.
 
-В ответе к курсу добавляются `ownerId`, `createdAt`, `updatedAt` и `reviewRequestedAt` — когда курс отправили на проверку (`null` — не ждёт). `Course` — курс со всеми полями. `CourseShort` — без `about`, а у уроков только `slug`, `title` и `short`.
+В ответе к курсу добавляются `ownerId`, `createdAt`, `updatedAt` и `reviewRequestedAt` — когда курс отправили на проверку (`null` — не ждёт), а также `views` и `readers` — сколько раз открывали курс и сколько разных читателей. `Course` — курс со всеми полями. `CourseShort` — без `about`, а у уроков только `slug`, `title` и `short`.
 
 ### Ошибки
 
@@ -325,8 +339,9 @@ Content-Type: image/png
 
 ## База
 
-Три таблицы (`database/schema.sql`):
+Четыре таблицы (`database/schema.sql`):
 
 - `users` — почта, имя, уровень доступа, даты регистрации и последнего входа;
 - `codes` — хэши кодов входа, срок и число попыток;
-- `courses` — курсы; `chips`, `author`, `about` и `pages` хранятся в JSON-колонках, `user_id` — владелец.
+- `courses` — курсы; `chips`, `author`, `about` и `pages` хранятся в JSON-колонках, `user_id` — владелец, `views_count` и `readers_count` — статистика;
+- `course_readers` — какие анонимные читатели уже открывали курс.

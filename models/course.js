@@ -42,6 +42,8 @@ function toCourse(row, { full }) {
         ownerId: row.user_id,
         // Когда автор отправил курс на проверку; null — проверки не ждёт
         reviewRequestedAt: row.review_requested_at ?? null,
+        views: row.views_count ?? 0,
+        readers: row.readers_count ?? 0,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
         ...(full
@@ -88,6 +90,31 @@ class CourseModel {
     static async setReview(id, date) {
         await pool.query('UPDATE courses SET review_requested_at = ? WHERE id = ?', [date, id]);
         return CourseModel.findById(id);
+    }
+
+    /**
+     * Засчитать открытие курса. Читатель `visitorId` считается один раз:
+     * `readers_count` растёт, только если он пришёл на этот курс впервые.
+     */
+    static async addView(id, visitorId) {
+        const connection = await pool.getConnection();
+        try {
+            await connection.beginTransaction();
+            const [result] = await connection.query(
+                'INSERT IGNORE INTO course_readers (course_id, visitor_id, first_seen_at) VALUES (?, ?, ?)',
+                [id, visitorId, new Date()]
+            );
+            await connection.query(
+                'UPDATE courses SET views_count = views_count + 1, readers_count = readers_count + ? WHERE id = ?',
+                [result.affectedRows, id]
+            );
+            await connection.commit();
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
     }
 
     static async delete(id) {

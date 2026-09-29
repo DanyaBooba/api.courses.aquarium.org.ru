@@ -42,9 +42,21 @@ CREATE TABLE IF NOT EXISTS courses (
     pages JSON NOT NULL,
     -- Автор отправил курс на проверку; NULL — проверки не ждёт
     review_requested_at DATETIME NULL,
+    -- Статистика: открытия курса и разные читатели (см. course_readers)
+    views_count INT UNSIGNED NOT NULL DEFAULT 0,
+    readers_count INT UNSIGNED NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     PRIMARY KEY (id),
     KEY courses_user_index (user_id),
     CONSTRAINT courses_user_fk FOREIGN KEY (user_id) REFERENCES users (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Кто уже читал курс: одна строка на пару «курс — анонимный читатель»
+CREATE TABLE IF NOT EXISTS course_readers (
+    course_id VARCHAR(64) NOT NULL,
+    visitor_id CHAR(36) NOT NULL,
+    first_seen_at DATETIME NOT NULL,
+    PRIMARY KEY (course_id, visitor_id),
+    CONSTRAINT course_readers_course_fk FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
